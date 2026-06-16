@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Playlist Editor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- ===== Top Bar (YouTube Music 스타일) ===== -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <span class="yt-logo">
+        My Music Playlist
+      </span>
+    </div>
+
+    <div class="topbar-center">
+      <div class="search-pill">
+        <svg viewBox="0 0 24 24" class="search-icon"><path d="M20.87 20.17l-5.59-5.59C16.35 13.35 17 11.75 17 10c0-3.87-3.13-7-7-7s-7 3.13-7 7 3.13 7 7 7c1.75 0 3.35-.65 4.58-1.71l5.59 5.59.7-.7zM10 16c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z" fill="currentColor"/></svg>
+        <input type="search" id="searchInput" class="search-input" placeholder="노래 또는 아티스트 검색" />
+      </div>
+    </div>
+
+    <div class="topbar-right">
+      <div class="avatar" title="sungho">S</div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- ===== Left : 플레이리스트 목록 ===== -->
+    <section class="panel left-panel">
+      <div class="panel-head">
+        <div>
+          <h2 class="panel-title">내 플레이리스트</h2>
+          <p class="panel-sub" id="songCount">0곡</p>
+        </div>
+        <div class="head-actions">
+          <button id="syncBtn" class="btn-sync" title="playlist.json 다시 불러오기 (메모·추가곡은 유지)">🔄 동기화</button>
+        </div>
+      </div>
+
+      <!-- 목록 헤더 행 -->
+      <div class="list-header">
+        <span class="col-index">#</span>
+        <span class="col-title">제목</span>
+        <span class="col-actions"></span>
+      </div>
+
+      <ul id="songList" class="song-list"></ul>
+      <p id="emptyMsg" class="empty-msg" hidden>결과가 없습니다.</p>
+    </section>
+
+    <!-- ===== Right : 재생 화면 ===== -->
+    <aside class="panel right-panel">
+      <div id="player" class="player-wrap">
+        <div class="player-placeholder">
+          <svg viewBox="0 0 24 24" class="placeholder-icon"><path d="M12 3v10.55A4 4 0 1014 17V7h4V3h-6z" fill="currentColor"/></svg>
+          <span>곡을 선택하면 재생됩니다</span>
+        </div>
+      </div>
+
+      <div class="player-controls">
+        <button id="prevBtn" class="ctrl-btn" title="이전 곡" disabled>⏮</button>
+        <span id="queuePos" class="queue-pos">-</span>
+        <button id="nextBtn" class="ctrl-btn" title="다음 곡" disabled>⏭</button>
+      </div>
+
+      <h3 class="np-title" id="npTitle">재생 중인 곡 없음</h3>
+      <p class="np-artist" id="npArtist">아티스트</p>
+
+      <dl class="np-meta">
+        <div><dt>메모</dt><dd id="npMemo">-</dd></div>
+      </dl>
+    </aside>
+
+    <!-- ===== Queue : 내가 담은 재생목록 ===== -->
+    <section class="panel queue-panel">
+      <div class="panel-head">
+        <div>
+          <h2 class="panel-title">재생목록</h2>
+          <p class="panel-sub" id="queueCount">0곡</p>
+        </div>
+        <div class="head-actions">
+          <button id="playAllBtn" class="btn-shuffle" title="재생목록 전체 재생">▶ 재생</button>
+          <button id="randomBtn" class="btn-sync" title="재생목록 셔플 재생">🔀</button>
+          <button id="clearQueueBtn" class="btn-sync" title="재생목록 비우기">🗑</button>
+        </div>
+      </div>
+      <ul id="queueList" class="queue-list"></ul>
+      <p id="queueEmpty" class="empty-msg">곡 목록의 ➕ 버튼으로 재생목록에 담아보세요.</p>
+    </section>
+
+    <!-- ===== Edit : 곡 추가/수정 폼 ===== -->
+    <section class="panel edit-panel">
+      <h2 class="panel-title" id="formTitle">곡 추가</h2>
+
+      <form id="songForm" class="song-form">
+        <input type="hidden" id="songId" />
+
+        <label>제목
+          <input type="text" id="inputTitle" required />
+        </label>
+        <label>가수
+          <input type="text" id="inputArtist" required />
+        </label>
+        <label>videoId
+          <input type="text" id="inputVideoId" placeholder="영상 ID 또는 YouTube URL 붙여넣기" required />
+        </label>
+        <label>메모
+          <textarea id="inputMemo" rows="2"></textarea>
+        </label>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="submitBtn">추가하기</button>
+          <button type="button" class="btn btn-ghost" id="resetBtn">초기화</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <!-- ===== Footer ===== -->
+  <footer class="footer">
+    <div> sungho · sungho051106@gmail.com</div>
+    <div> HTML · CSS · JavaScript · localStorage · YouTube Embed</div>
+    <div> My Playlist Editor (2026)</div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

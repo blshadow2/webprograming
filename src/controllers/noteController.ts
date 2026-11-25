@@ -15,12 +15,39 @@ import type { CreateNoteBody, IdParams, NoteParams } from '../types.js';
 export const create:
   RequestHandler<IdParams, unknown, CreateNoteBody | undefined> =
   async (req, res) => {
-    throw new Error('TODO 15: create를 구현하세요');
+    const { page, content } = req.body ?? {};
+    if (typeof page !== 'number' || !Number.isInteger(page) || page < 1) {
+      res.status(400).json({ message: 'page는 1 이상의 정수여야 합니다.' });
+      return;
+    }
+
+    const trimmedContent = typeof content === 'string' ? content.trim() : '';
+    if (!trimmedContent) {
+      res.status(400).json({ message: 'content는 비어 있지 않은 문자열이어야 합니다.' });
+      return;
+    }
+
+    const note = await noteStore.create(Number(req.params.id), {
+      page,
+      content: trimmedContent,
+    });
+    if (note === null) {
+      res.status(404).json({ message: '도서를 찾을 수 없습니다.' });
+      return;
+    }
+
+    res.status(201).json(note);
   };
 
 // TODO 16: DELETE /books/:id/notes/:noteId
 //   - 성공하면 204(본문 없음)
 //   - 노트가 없거나 경로의 도서(:id)에 속한 노트가 아니면 404
 export const remove: RequestHandler<NoteParams> = async (req, res) => {
-  throw new Error('TODO 16: remove를 구현하세요');
+  const removed = await noteStore.remove(Number(req.params.id), Number(req.params.noteId));
+  if (!removed) {
+    res.status(404).json({ message: '노트를 찾을 수 없습니다.' });
+    return;
+  }
+
+  res.status(204).end();
 };

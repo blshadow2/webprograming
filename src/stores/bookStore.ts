@@ -5,7 +5,7 @@
 // 이름 / 학번
 
 import { prisma } from '../db.js';
-import { Prisma, type Book } from '../generated/prisma/client.js';
+import type { Prisma, Book } from '../generated/prisma/client.js';
 import { isPrismaError } from './prismaError.js';
 import type { BookChanges, ListOptions, NewBook } from '../types.js';
 
@@ -20,7 +20,23 @@ import type { BookChanges, ListOptions, NewBook } from '../types.js';
 //   - [설명] 주석 한 줄로 노트 내용(include의 notes) 대신 _count로
 //     노트 수만 조회하는 이유를 남겨라.
 export function findAll(options: ListOptions) {
-  throw new Error('TODO 4: findAll을 구현하세요');
+  const { status, keyword, tag } = options;
+  const where: Prisma.BookWhereInput = {};
+  if (status !== undefined) where.status = status;
+  if (keyword !== undefined) {
+    where.OR = [
+      { title: { contains: keyword, mode: 'insensitive' } },
+      { author: { contains: keyword, mode: 'insensitive' } },
+    ];
+  }
+  if (tag !== undefined) where.tags = { some: { name: tag } };
+
+  return prisma.book.findMany({
+    where,
+    orderBy: { id: 'asc' },
+    // [설명] 목록은 노트 수만 필요하므로 _count로 조회해 노트 내용 전송을 줄인다.
+    include: { tags: true, _count: { select: { notes: true } } },
+  });
 }
 
 // [제공 예시] 상세 조회 — 노트(등록순)와 태그 포함. 없으면 null (수정 불필요)
@@ -41,7 +57,19 @@ export function findById(id: number) {
 //   - 같은 제목 + 저자의 도서가 이미 있으면 데이터베이스가 P2002 오류를 발생시킨다.
 //     이 오류는 처리하지 않고 그대로 두어 에러 핸들러가 409로 응답하게 한다.
 export function create(input: NewBook) {
-  throw new Error('TODO 5: create를 구현하세요');
+  const { tags, ...book } = input;
+  return prisma.book.create({
+    data: {
+      ...book,
+      tags: {
+        connectOrCreate: tags.map((name) => ({
+          where: { name },
+          create: { name },
+        })),
+      },
+    },
+    include: { tags: true },
+  });
 }
 
 // TODO 6: 도서를 부분 수정하고, 수정한 도서를 반환하라. 대상이 없으면 null.
@@ -51,11 +79,25 @@ export function create(input: NewBook) {
 export async function update(
   id: number, changes: BookChanges,
 ): Promise<Book | null> {
-  throw new Error('TODO 6: update를 구현하세요');
+  const data = { ...changes };
+  if (data.status !== undefined && data.status !== 'done') data.rating = null;
+
+  try {
+    return await prisma.book.update({ where: { id }, data });
+  } catch (error) {
+    if (isPrismaError(error, 'P2025')) return null;
+    throw error;
+  }
 }
 
 // TODO 7: 도서를 삭제하라. 삭제했으면 true, 대상이 없으면(P2025) false.
 //   - 노트와 태그 연결 행은 데이터베이스가 함께 삭제하므로 따로 삭제하지 않는다.
 export async function remove(id: number): Promise<boolean> {
-  throw new Error('TODO 7: remove를 구현하세요');
+  try {
+    await prisma.book.delete({ where: { id } });
+    return true;
+  } catch (error) {
+    if (isPrismaError(error, 'P2025')) return false;
+    throw error;
+  }
 }

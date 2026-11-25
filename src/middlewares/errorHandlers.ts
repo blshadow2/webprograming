@@ -20,5 +20,27 @@ export const notFound: RequestHandler = (req, res) => {
 //   - 응답 형식은 다른 오류 응답과 같은 { message } JSON으로 통일한다.
 export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
   console.error(err);
-  res.status(500).json({ message: 'TODO 2: errorHandler를 구현하세요' });
+
+  if (res.headersSent) {
+    next(err);
+    return;
+  }
+
+  if (err instanceof SyntaxError && 'type' in err && err.type === 'entity.parse.failed') {
+    res.status(400).json({ message: '잘못된 JSON 본문' });
+    return;
+  }
+
+  if (err instanceof Prisma.PrismaClientKnownRequestError) {
+    const { code } = err;
+    if (code === 'P2002') {
+      res.status(409).json({ message: '이미 존재하는 데이터', code });
+      return;
+    }
+
+    res.status(500).json({ message: '서버 오류', code });
+    return;
+  }
+
+  res.status(500).json({ message: '서버 오류' });
 };
